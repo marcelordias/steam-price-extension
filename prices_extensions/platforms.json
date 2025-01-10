@@ -1,0 +1,24 @@
+{
+    "platforms": [
+        {
+            "id": "steam",
+            "name": "PC",
+            "checked": true
+        },
+        {
+            "id": "playstation-store",
+            "name": "PlayStation Store",
+            "checked": false
+        },
+        {
+            "id": "xbox",
+            "name": "Xbox One",
+            "checked": false
+        },
+        {
+            "id": "nintendo-eshop",
+            "name": "Nintendo",
+            "checked": false
+        }
+    ]
+}

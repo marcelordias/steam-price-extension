@@ -1,0 +1,39 @@
+{
+    "currencies": [
+        {
+            "id": "1",
+            "name": "eur",
+            "checked": true
+        },
+        {
+            "id": "2",
+            "name": "usd",
+            "checked": false
+        },
+        {
+            "id": "3",
+            "name": "gbp",
+            "checked": false
+        },
+        {
+            "id": "4",
+            "name": "rub",
+            "checked": false
+        },
+        {
+            "id": "5",
+            "name": "brl",
+            "checked": false
+        },
+        {
+            "id": "6",
+            "name": "cad",
+            "checked": false
+        },
+        {
+            "id": "7",
+            "name": "aud",
+            "checked": false
+        }
+    ]
+}

@@ -1,0 +1,77 @@
+{
+    "regions": [
+      {
+        "id": "2",
+        "name": "GLOBAL",
+        "filterName": "STEAM GLOBAL",
+        "checked": true
+      },
+      {
+        "id": "9",
+        "name": "EUROPE",
+        "filterName": "STEAM EU",
+        "checked": false
+      },
+      {
+        "id": "25",
+        "name": "GIFT",
+        "filterName": "STEAM GIFT GLOBAL",
+        "checked": false
+      },
+      {
+        "id": "80",
+        "name": "GLOBAL",
+        "filterName": "EPIC GLOBAL",
+        "checked": false
+      },
+      {
+        "id": "259",
+        "name": "GIFT EU",
+        "filterName": "STEAM GIFT EU",
+        "checked": false
+      },
+      {
+        "id": "260",
+        "name": "GIFT IN ENGLISH",
+        "filterName": "STEAM GIFT EN LANG.",
+        "checked": false
+      },
+      {
+        "id": "261",
+        "name": "IN ENGLISH ONLY",
+        "filterName": "STEAM ENG ONLY",
+        "checked": false
+      },
+      {
+        "id": "262",
+        "name": "GIANTS GLOBAL",
+        "filterName": "GIANTS GLOBAL",
+        "checked": false
+      },
+      {
+        "id": "268",
+        "name": "GIANTS EU",
+        "filterName": "GIANTS EU",
+        "checked": false
+      },
+      {
+        "id": "427",
+        "name": "EU ENGLISH ONLY",
+        "filterName": "STEAM EU EN ONLY",
+        "checked": false
+      },
+      {
+        "id": "471",
+        "name": "XBOX/PC EU ENG",
+        "filterName": "XBOX/PC EU ENGLISH ONLY",
+        "checked": false
+      },
+      {
+        "id": "steamrow",
+        "name": "ROW",
+        "filterName": "STEAM ROW",
+        "checked": false
+      }
+    ]
+  }
+  

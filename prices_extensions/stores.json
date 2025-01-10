@@ -1,0 +1,208 @@
+{
+    "stores": [
+        {
+            "id": "1",
+            "name": "Steam",
+            "isPopular": true,
+            "checked": true
+        },
+        {
+            "id": "2",
+            "name": "Dlgamer EU",
+            "isPopular": true,
+            "checked": false
+        },
+        {
+            "id": "5",
+            "name": "GamersGate",
+            "isPopular": false,
+            "checked": false
+        },
+        {
+            "id": "7",
+            "name": "Gamesplanet FR",
+            "isPopular": true,
+            "checked": false
+        },
+        {
+            "id": "9",
+            "name": "CDKeys.com",
+            "isPopular": true,
+            "checked": false
+        },
+        {
+            "id": "12",
+            "name": "2Game EU",
+            "isPopular": true,
+            "checked": false
+        },
+        {
+            "id": "13",
+            "name": "Instant Gaming",
+            "isPopular": true,
+            "checked": false
+        },
+        {
+            "id": "47",
+            "name": "Kinguin",
+            "isPopular": false,
+            "checked": false
+        },
+        {
+            "id": "61",
+            "name": "G2A",
+            "isPopular": true,
+            "checked": false
+        },
+        {
+            "id": "63",
+            "name": "Greenmangaming",
+            "isPopular": true,
+            "checked": false
+        },
+        {
+            "id": "67",
+            "name": "CJS CDKeys",
+            "isPopular": true,
+            "checked": false
+        },
+        {
+            "id": "73",
+            "name": "Gamingdragons",
+            "isPopular": false,
+            "checked": false
+        },
+        {
+            "id": "81",
+            "name": "GameBillet EU",
+            "isPopular": true,
+            "checked": false
+        },
+        {
+            "id": "94",
+            "name": "HRK",
+            "isPopular": true,
+            "checked": false
+        },
+        {
+            "id": "126",
+            "name": "Humble Store",
+            "isPopular": true,
+            "checked": false
+        },
+        {
+            "id": "157",
+            "name": "Epic Games",
+            "isPopular": false,
+            "checked": false
+        },
+        {
+            "id": "158",
+            "name": "ElectronicFirst",
+            "isPopular": false,
+            "checked": false
+        },
+        {
+            "id": "166",
+            "name": "WinGameStore",
+            "isPopular": true,
+            "checked": false
+        },
+        {
+            "id": "218",
+            "name": "GAMIVO",
+            "isPopular": true,
+            "checked": false
+        },
+        {
+            "id": "228",
+            "name": "Fanatical",
+            "isPopular": true,
+            "checked": false
+        },
+        {
+            "id": "270",
+            "name": "Allyouplay",
+            "isPopular": true,
+            "checked": false
+        },
+        {
+            "id": "272",
+            "name": "Eneba",
+            "isPopular": false,
+            "checked": false
+        },
+        {
+            "id": "324",
+            "name": "K4G",
+            "isPopular": true,
+            "checked": false
+        },
+        {
+            "id": "326",
+            "name": "eTail.Market EU",
+            "isPopular": false,
+            "checked": false
+        },
+        {
+            "id": "330",
+            "name": "Noctre",
+            "isPopular": false,
+            "checked": false
+        },
+        {
+            "id": "408",
+            "name": "Driffle",
+            "isPopular": true,
+            "checked": false
+        },
+        {
+            "id": "557",
+            "name": "GAMESEAL",
+            "isPopular": false,
+            "checked": false
+        },
+        {
+            "id": "565",
+            "name": "YUPLAY",
+            "isPopular": true,
+            "checked": false
+        },
+        {
+            "id": "700",
+            "name": "Gamesplanet DE",
+            "isPopular": true,
+            "checked": false
+        },
+        {
+            "id": "701",
+            "name": "Gamesplanet UK",
+            "isPopular": true,
+            "checked": false
+        },
+        {
+            "id": "723",
+            "name": "Keycense",
+            "isPopular": false,
+            "checked": false
+        },
+        {
+            "id": "776",
+            "name": "GamerThor",
+            "isPopular": false,
+            "checked": false
+        },
+        {
+            "id": "777",
+            "name": "KEYEKEY",
+            "isPopular": false,
+            "checked": false
+        },
+        {
+            "id": "61616",
+            "name": "G2A Plus",
+            "isPopular": true,
+            "checked": false
+        }
+    ]
+}

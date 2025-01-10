@@ -5,14 +5,34 @@
   "description": "Injeta preços de jogos na página da Steam a partir do AllKeyShop.",
   "permissions": [
     "activeTab",
-    "scripting"
+    "scripting",
+    "storage",
+    "webRequest"
   ],
   "host_permissions": [
-    "https://www.eneba.com/*"
+    "http://localhost:3000/*",
+    "https://store.steampowered.com/*"
   ],
+  "action": {
+    "default_popup": "popup.html"
+  },
   "background": {
     "service_worker": "background.js"
   },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "stores.json",
+        "regions.json",
+        "editions.json",
+        "currencies.json",
+        "platforms.json"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
   "content_scripts": [
     {
       "matches": [
