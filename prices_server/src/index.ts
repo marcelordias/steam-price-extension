@@ -8,9 +8,13 @@ const app = express();
 const PORT = process.env.PORT ?? 3000;
 
 app.use(corsMiddleware);
+
 app.use(express.json());
+
 app.use(loggerMiddleware);
+
 app.use(routes);
+
 app.use(errorHandlerMiddleware);
 
 app.listen(PORT, () => {
