@@ -3,6 +3,7 @@
   "name": "Comparador de Preços Steam",
   "version": "1.0",
   "description": "Injeta preços de jogos na página da Steam a partir do AllKeyShop.",
+  "default_locale": "en",
   "permissions": [
     "activeTab",
     "scripting",
@@ -11,7 +12,9 @@
   ],
   "host_permissions": [
     "http://localhost:3000/*",
-    "https://store.steampowered.com/*"
+    "https://*.steampowered.com/*",
+    "https://steamdb.info/*",
+    "https://steamcommunity.com/*"
   ],
   "action": {
     "default_popup": "popup.html"
@@ -26,7 +29,8 @@
         "regions.json",
         "editions.json",
         "currencies.json",
-        "platforms.json"
+        "platforms.json",
+        "assets/white.svg"
       ],
       "matches": [
         "<all_urls>"
