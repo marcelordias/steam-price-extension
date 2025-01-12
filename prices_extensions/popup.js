@@ -193,19 +193,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
             const currentTab = tabs[0];
-
+            console.log('Current tab:', currentTab);
             if (currentTab.url?.includes('store.steampowered.com/app/')) {
                 button.innerHTML = '<span>Buscando preços...</span>';
-
+                console.log('Applying filters:', filters);
                 // call the content script to apply the filters
                 await chrome.tabs.sendMessage(currentTab.id, {
                     action: 'applyFilters',
                     filters
                 }, response => {
-                    if (response.success) {
+                    console.log('Prices fetched:', response);
+                    if (response?.success) {
                         button.innerHTML = '<span>Preços atualizados</span>';
                     } else {
-                        console.error('Error fetching prices:', response.error);
+                        console.error('Error fetching prices:', response?.error);
                         button.innerHTML = '<span>Erro ao buscar preços</span>';
                     }
                 });

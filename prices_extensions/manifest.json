@@ -11,13 +11,14 @@
     "webRequest"
   ],
   "host_permissions": [
-    "http://localhost:3000/*",
+    "http://localhost:8080/*",
     "https://*.steampowered.com/*",
     "https://steamdb.info/*",
-    "https://steamcommunity.com/*"
+    "https://steamcommunity.com/*",
+    "https://steam-price-extension.onrender.com/*"
   ],
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "onboarding.html"
   },
   "background": {
     "service_worker": "background.js"
@@ -46,7 +47,8 @@
         "content.js"
       ],
       "css": [
-        "styles.css"
+        "styles.css",
+        "onboarding.style.css"
       ]
     }
   ],
