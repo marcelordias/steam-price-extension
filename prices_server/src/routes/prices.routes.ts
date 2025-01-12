@@ -4,7 +4,14 @@ import { validateRequestMiddleware } from "../middlewares/validateRequest.middle
 import { apiKeyMiddleware } from "../middlewares/apiKey.middleware";
 
 const router = Router();
-
-router.post("/api/prices", apiKeyMiddleware, validateRequestMiddleware, getPrices);
+router.get("/api/validate-token", apiKeyMiddleware, (req, res) => {
+  res.status(200).json({ valid: true });
+});
+router.post(
+  "/api/prices",
+  apiKeyMiddleware,
+  validateRequestMiddleware,
+  getPrices
+);
 
 export default router;
