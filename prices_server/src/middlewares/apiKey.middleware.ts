@@ -7,12 +7,11 @@ export const apiKeyMiddleware = (
   res: Response,
   next: NextFunction
 ): void => {
-  const adminKey = req.headers["x-admin-key"] as string; // Admin Key
   const apiKey = req.headers["x-api-key"] as string; // API Key
   const clientId = req.headers["x-client-id"] as string; // Client ID
 
   // Se a Admin Key for válida, permitir o acesso sem validação
-  if (adminKey && adminKey === ENV.ADMIN_KEY) {
+  if (apiKey && apiKey === ENV.ADMIN_KEY && clientId === ENV.ADMIN_CLIENT_ID) {
     console.log("Admin access granted.");
     return next();
   }
