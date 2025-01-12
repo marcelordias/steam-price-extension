@@ -212,6 +212,7 @@ function createLowestPriceElement() {
   const element = document.createElement('a');
   element.className = 'steamdb_prices';
   element.href = `${GetHomepage()}app/${GetCurrentAppID()}/`;
+  element.target = '_blank';
   element.dir = _t('@@bidi_dir');
 
   const image = document.createElement('img');
