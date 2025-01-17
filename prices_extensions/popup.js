@@ -126,15 +126,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Update the count of selected items
     // In updateCount function
     function updateCount(listElement, name, countElement) {
-        if (name === 'currency' || name === 'platform') {
-            const total = listElement.querySelectorAll(`input[name="${name}"]`).length;
-            const checked = listElement.querySelectorAll(`input[name="${name}"]:checked`).length;
-            countElement.textContent = `${checked} de ${total} selecionada`;
-        } else {
-            const total = listElement.querySelectorAll(`input[name="${name}"]`).length;
-            const checked = listElement.querySelectorAll(`input[name="${name}"]:checked`).length;
-            countElement.textContent = `${checked} de ${total} selecionadas`;
-        }
+        const total = listElement.querySelectorAll(`input[name="${name}"]`).length;
+        const checked = listElement.querySelectorAll(`input[name="${name}"]:checked`).length;
+        countElement.textContent = `${checked} of ${total} selected`;
     }
 
     // Update price range display
@@ -187,36 +181,31 @@ document.addEventListener('DOMContentLoaded', async () => {
                 platform: getSelectedFilters('platform')
             };
 
-            console.log('Saving filters:', filters);
-
             await saveFilters(filters);
 
             const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
             const currentTab = tabs[0];
-            console.log('Current tab:', currentTab);
             if (currentTab.url?.includes('store.steampowered.com/app/')) {
-                button.innerHTML = '<span>Buscando preços...</span>';
-                console.log('Applying filters:', filters);
+                button.innerHTML = '<span>Fetching prices...</span>';
                 // call the content script to apply the filters
                 await chrome.tabs.sendMessage(currentTab.id, {
                     action: 'applyFilters',
                     filters
                 }, response => {
-                    console.log('Prices fetched:', response);
                     if (response?.success) {
-                        button.innerHTML = '<span>Preços atualizados</span>';
+                        button.innerHTML = '<span>Updated Filters!</span>';
                     } else {
                         console.error('Error fetching prices:', response?.error);
-                        button.innerHTML = '<span>Erro ao buscar preços</span>';
+                        button.innerHTML = '<span>Error fetching prices</span>';
                     }
                 });
 
             } else {
-                button.innerHTML = '<span>Preferências salvas</span>';
+                button.innerHTML = '<span>Saved!</span>';
             }
         } catch (error) {
             console.error('Error saving filters:', error);
-            button.innerHTML = '<span>Erro ao salvar</span>';
+            button.innerHTML = '<span>Error saving filters</span>';
         } finally {
             setTimeout(() => {
                 button.innerHTML = originalText;
