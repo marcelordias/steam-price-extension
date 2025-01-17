@@ -17,7 +17,7 @@
     "https://steam-price-extension.onrender.com/*"
   ],
   "action": {
-    "default_popup": "onboarding.html"
+    "default_popup": "popup.html"
   },
   "background": {
     "service_worker": "background.js"
@@ -46,8 +46,7 @@
         "content.js"
       ],
       "css": [
-        "styles.css",
-        "onboarding.style.css"
+        "styles.css"
       ]
     }
   ],

@@ -1,5 +1,4 @@
 // Common options and headers reused across requests
-const JSON_HEADERS = { 'Content-Type': 'application/json' };
 const STEAMDB_HEADERS = {
   Accept: 'application/json',
   'X-Requested-With': 'SteamDB',
@@ -8,7 +7,6 @@ const STEAMDB_HEADERS = {
 // Listener for Chrome messages
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const startTime = performance.now();
-  console.log(message);
   if (message.action === "fetchPrices") {
     fetchPrices(message.data)
       .then(data => {
@@ -38,11 +36,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // Fetch prices with POST request
 async function fetchPrices(data) {
-  const authHeaders = await getAuthHeaders();
-  console.log(authHeaders);
   const response = await fetch('https://steam-price-extension.onrender.com/api/prices', {
     method: 'POST',
-    headers: { ...authHeaders },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
 
@@ -70,15 +66,6 @@ async function handleResponse(response) {
       const retryAfter = parseRetryAfter(response.headers.get('Retry-After'));
       console.warn('Rate limited. Retry after', retryAfter, 'seconds.');
     }
-    if (response.status === 401) {
-      // clear token and redirect to onboarding page
-      chrome.storage.sync.remove(['authToken', 'authClientId'], () => {
-        chrome.tabs.create({
-          url: 'onboarding.html',
-        });
-      });
-      throw new Error('Unauthorized - Please authenticate');
-    }
     throw new Error(`HTTP error! status: ${response.status}`);
   }
   return response.json();
@@ -94,16 +81,4 @@ function parseRetryAfter(header) {
 function logPerformance(action, startTime) {
   const duration = performance.now() - startTime;
   console.log(`${action} completed in ${duration.toFixed(2)}ms`);
-}
-
-async function getAuthHeaders() {
-  return new Promise((resolve) => {
-    chrome.storage.sync.get(['authToken', 'authClientId'], (result) => {
-      resolve({
-        'Content-Type': 'application/json',
-        'x-api-key': `${result.authToken}`,
-        'x-client-id': `${result.authClientId}`
-      });
-    });
-  });
 }

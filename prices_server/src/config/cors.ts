@@ -1,7 +1,7 @@
 import cors from "cors";
 
 export const corsOptions = {
-  origin: "*", // Configuração de origem
+  origin: "*",
   methods: ["GET", "POST"],
 };
 
