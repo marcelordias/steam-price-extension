@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Comparador de Preços Steam",
+  "name": "Steam Price Extension",
   "version": "1.0",
-  "description": "Injeta preços de jogos na página da Steam a partir do AllKeyShop.",
+  "description": "Get the best prices for games on Steam",
   "default_locale": "en",
   "permissions": [
     "activeTab",
