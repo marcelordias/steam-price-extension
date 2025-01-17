@@ -11,7 +11,6 @@
     "webRequest"
   ],
   "host_permissions": [
-    "http://localhost:8080/*",
     "https://*.steampowered.com/*",
     "https://steamdb.info/*",
     "https://steamcommunity.com/*",
