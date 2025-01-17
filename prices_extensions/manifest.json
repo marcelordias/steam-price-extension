@@ -51,8 +51,8 @@
     }
   ],
   "icons": {
-    "16": "assets/icon16.png",
-    "48": "assets/icon48.png",
-    "128": "assets/icon128.png"
+    "16": "assets/icon16.jpg",
+    "48": "assets/icon48.jpg",
+    "128": "assets/icon128.jpg"
   }
 }
