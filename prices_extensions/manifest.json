@@ -6,7 +6,6 @@
   "default_locale": "en",
   "permissions": [
     "activeTab",
-    "scripting",
     "storage",
     "webRequest"
   ],
