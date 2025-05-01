@@ -132,7 +132,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Update price range display
-    function updatePriceDisplay() {
+    function debounce(func, wait) {
+        let timeout;
+        return function (...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
+
+    const debouncedUpdatePriceDisplay = debounce(function () {
         const minValue = parseInt(elements.minPriceRange.value);
         const maxValue = parseInt(elements.maxPriceRange.value);
 
@@ -153,7 +161,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const maxPercent = (elements.maxPriceRange.value / elements.maxPriceRange.max) * 100;
         elements.rangeTrack.style.left = `${minPercent}%`;
         elements.rangeTrack.style.width = `${maxPercent - minPercent}%`;
-    }
+    }, 50); // 50ms debounce
 
     // Save filters to local storage
     async function saveFilters(filters) {
@@ -187,19 +195,34 @@ document.addEventListener('DOMContentLoaded', async () => {
             const currentTab = tabs[0];
             if (currentTab.url?.includes('store.steampowered.com/app/')) {
                 button.innerHTML = '<span>Fetching prices...</span>';
-                // call the content script to apply the filters
-                await chrome.tabs.sendMessage(currentTab.id, {
-                    action: 'applyFilters',
-                    filters
-                }, response => {
+
+                try {
+                    const response = await new Promise((resolve, reject) => {
+                        chrome.tabs.sendMessage(
+                            currentTab.id,
+                            { action: 'applyFilters', filters },
+                            (response) => {
+                                if (chrome.runtime.lastError) {
+                                    reject(chrome.runtime.lastError);
+                                } else {
+                                    resolve(response);
+                                }
+                            }
+                        );
+
+                        setTimeout(() => reject(new Error('Request timed out')), 10000);
+                    });
+
                     if (response?.success) {
                         button.innerHTML = '<span>Updated Filters!</span>';
                     } else {
                         console.error('Error fetching prices:', response?.error);
                         button.innerHTML = '<span>Error fetching prices</span>';
                     }
-                });
-
+                } catch (error) {
+                    console.error('Message error:', error);
+                    button.innerHTML = '<span>Communication error</span>';
+                }
             } else {
                 button.innerHTML = '<span>Saved!</span>';
             }
@@ -238,11 +261,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         const range = result.priceRange || DEFAULT_PRICE_RANGE;
         elements.minPriceRange.value = range.min;
         elements.maxPriceRange.value = range.max;
-        updatePriceDisplay();
+        debouncedUpdatePriceDisplay();
     });
 
-    elements.minPriceRange.addEventListener('input', updatePriceDisplay);
-    elements.maxPriceRange.addEventListener('input', updatePriceDisplay);
+    elements.minPriceRange.addEventListener('input', debouncedUpdatePriceDisplay);
+    elements.maxPriceRange.addEventListener('input', debouncedUpdatePriceDisplay);
 
     // Initialize all filters
     await Promise.all([
