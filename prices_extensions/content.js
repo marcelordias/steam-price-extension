@@ -14,6 +14,9 @@ const language = ExtensionApi.i18n.getUILanguage();
 const numberFormatter = new Intl.NumberFormat(language);
 let CurrentAppID = null;
 
+// Cache for previous requests
+const priceCache = new Map();
+
 // Utilities
 function GetLanguage() {
   return language;
@@ -28,6 +31,7 @@ function GetCurrentAppID() {
   if (!CurrentAppID) {
     CurrentAppID = GetAppIDFromUrl(location.pathname);
   }
+  console.log(`[AppID] Current AppID: ${CurrentAppID}`); // Debugging line
   return CurrentAppID;
 }
 
@@ -48,16 +52,14 @@ chrome.storage.local.get(
   ['priceRange', 'stores', 'regions', 'editions', 'currency', 'platform'],
   async (result) => {
     try {
-      if (Object.keys(result).length) {
-        await fetchPricesWithFilters({
-          priceRange: result.priceRange || { min: 0, max: 999 },
-          stores: result.stores || [],
-          regions: result.regions || [],
-          editions: result.editions || [],
-          currency: result.currency || '',
-          platform: result.platform || '',
-        });
-      }
+      await fetchPricesWithFilters({
+        priceRange: result.priceRange || { min: 0, max: 999 },
+        stores: result.stores || [],
+        regions: result.regions || [],
+        editions: result.editions || [],
+        currency: result.currency || '',
+        platform: result.platform || '',
+      });
     } catch (error) {
       console.error('Error fetching prices:', error);
     } finally {
@@ -76,22 +78,120 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
+function extractGameTitle() {
+  const appHubName = document.querySelector('.apphub_AppName');
+
+  const pageTitle = document.title.split('::')[0]?.trim() ||
+    document.title.split('-')[0]?.trim() ||
+    document.title;
+
+  const metaTitle = document.querySelector('meta[property="og:title"]')?.content;
+
+  // Choose the best available source
+  let rawTitle = appHubName?.textContent || metaTitle || pageTitle || '';
+
+  // Clean the title but preserve meaningful characters
+  // Only remove characters that might interfere with search
+  let cleanTitle = rawTitle
+    .replace(/™|®|©/g, '')                 // Remove trademark/copyright symbols
+    .replace(/\s+/g, ' ')                  // Normalize whitespace
+    .replace(/\s*[-:]\s*(Steam|Valve).*/i, '') // Remove "- Steam" or ": Valve" suffixes
+    .trim();
+
+  console.log(`[Title Extraction] Raw: "${rawTitle}", Cleaned: "${cleanTitle}"`);
+
+  if (!cleanTitle) {
+    throw new Error('Game title could not be determined');
+  }
+
+  return cleanTitle;
+}
+
 async function fetchPricesWithFilters(filters) {
   try {
-    const gameTitleElement = document.querySelector('.apphub_AppName');
-    if (!gameTitleElement) throw new Error('Game title not found');
+    const gameTitle = extractGameTitle();
 
-    const gameTitle = gameTitleElement.textContent.replace(/[^a-zA-Z0-9 ]/g, '');
-    const data = await chrome.runtime.sendMessage({
-      action: 'fetchPrices',
-      data: { gameTitle, filterOptions: filters },
-    });
+    // Create a cache key from the gameTitle and filters
+    const cacheKey = JSON.stringify({ gameTitle, filters });
+
+    // Check if we have cached results in memory
+    if (priceCache.has(cacheKey)) {
+      console.log('[Cache] Using in-memory cached price data');
+      const cachedData = priceCache.get(cacheKey);
+      injectPrices(cachedData);
+      return cachedData;
+    }
+
+    // Show loading indicator
+    const loadingIndicator = document.createElement('div');
+    loadingIndicator.className = 'game_area_purchase_game_wrapper dynamic loading';
+    loadingIndicator.innerHTML = `
+      <div class="game_area_purchase_game notice_box_content">
+        <div class="game_purchase_loading">
+          <div class="throbber"></div>
+          <div>Loading prices...</div>
+        </div>
+      </div>
+    `;
+
+    const mainContainer = document.querySelector('#game_area_purchase');
+    const existingWrapper = mainContainer?.querySelector('.game_area_purchase_game_wrapper');
+    if (mainContainer && existingWrapper) {
+      // Clean previous dynamic elements
+      mainContainer.querySelectorAll('.dynamic').forEach(el => el.remove());
+      existingWrapper.insertAdjacentElement('afterend', loadingIndicator);
+    }
+
+    console.log(`[Request] Fetching prices for ${gameTitle} with filters`);
+    const requestStart = performance.now();
+
+    const data = await Promise.race([
+      chrome.runtime.sendMessage({
+        action: 'fetchPrices',
+        data: { gameTitle, filterOptions: filters },
+      }),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Fetch timeout - request took too long')), 30000)
+      )
+    ]);
+
+    // Remove loading indicator
+    loadingIndicator?.remove();
+
+    const requestDuration = performance.now() - requestStart;
+    console.log(
+      `[Performance] Price fetch completed in ${requestDuration.toFixed(2)}ms` +
+      (data.fromCache ? ' (from service worker cache)' : '')
+    );
 
     if (!data.success) throw new Error(data.error || 'Failed to fetch prices');
+
+    // Cache the successful response in memory
+    priceCache.set(cacheKey, data.data);
+
     injectPrices(data.data);
     return data;
   } catch (error) {
-    console.error('Error fetching prices:', error);
+    console.error('[Error] Error fetching prices:', error);
+
+    // Show error message in UI
+    const mainContainer = document.querySelector('#game_area_purchase');
+    if (mainContainer) {
+      const errorEl = document.createElement('div');
+      errorEl.className = 'game_area_purchase_game_wrapper dynamic error';
+      errorEl.innerHTML = `
+        <div class="game_area_purchase_game notice_box_content">
+          <h1>Error loading prices</h1>
+          <div>${error.message}</div>
+        </div>
+      `;
+      mainContainer.querySelector('.loading')?.remove();
+      const existingWrapper = mainContainer.querySelector('.game_area_purchase_game_wrapper');
+      if (existingWrapper) {
+        existingWrapper.insertAdjacentElement('afterend', errorEl);
+      }
+    }
+
     throw error;
   }
 }
@@ -180,19 +280,37 @@ async function DrawLowestPrice() {
   if (!container) return;
 
   const element = createLowestPriceElement();
+  const loadingIndicator = document.createElement('div');
+  loadingIndicator.className = 'steamdb_prices_loading';
+  loadingIndicator.textContent = 'Loading price history...';
+  element.querySelector('div').appendChild(loadingIndicator);
+
   container.insertAdjacentElement('afterbegin', element);
 
-  const response = await chrome.runtime.sendMessage({
-    action: 'GetAppPrice',
-    data: { appid: GetCurrentAppID(), currency },
-  });
+  try {
+    console.log(`[Request] Fetching price history for ${GetCurrentAppID()} (${currency})`);
+    const response = await chrome.runtime.sendMessage({
+      action: 'GetAppPrice',
+      data: { appid: GetCurrentAppID(), currency },
+    });
 
-  if (!response?.success) {
-    element.remove();
-    return;
+    if (!response?.success) {
+      // Show a meaningful error instead of removing the element
+      element.querySelector('.steamdb_prices_top').textContent = 'Price history unavailable';
+      element.querySelector('.steamdb_prices_bottom').textContent =
+        response?.error ? `Error: ${response.error}` : 'Could not load price data';
+      loadingIndicator.remove();
+      return;
+    }
+
+    loadingIndicator.remove();
+    updateLowestPriceElement(response.data, element);
+  } catch (error) {
+    console.error('Error loading price history:', error);
+    element.querySelector('.steamdb_prices_top').textContent = 'Price history unavailable';
+    element.querySelector('.steamdb_prices_bottom').textContent = `Error: ${error.message}`;
+    loadingIndicator?.remove();
   }
-
-  updateLowestPriceElement(response.data, element);
 }
 
 function adjustCurrencyForRegion() {
@@ -229,6 +347,12 @@ function createLowestPriceElement() {
 function updateLowestPriceElement(data, element) {
   const top = element.querySelector('.steamdb_prices_top');
   const bottom = element.querySelector('.steamdb_prices_bottom');
+
+  if (!data.data || !data.data.p) {
+    top.innerHTML = _t('app_price_unavailable') || 'Price data unavailable';
+    bottom.textContent = data.error ? `Error: ${data.error}` : 'Could not load price data';
+    return;
+  }
 
   const safePrice = escapeHtml(data.data.p);
 

@@ -3,8 +3,8 @@ import { isValidOffer, formatPrice } from "../utils/price.util";
 
 export const fetchPrices = async (gameTitle: string, filterOptions: any) => {
   const service = createAllkeyshopService(
-    filterOptions?.currency || "eur",
-    filterOptions?.platform || "pc"
+    filterOptions?.currency ?? "eur",
+    filterOptions?.platform ?? "pc"
   );
 
   const result = await service.search(gameTitle);
