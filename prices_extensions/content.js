@@ -108,35 +108,6 @@ function extractGameTitle() {
   return cleanTitle;
 }
 
-function extractGameTitle() {
-  const appHubName = document.querySelector('.apphub_AppName');
-
-  const pageTitle = document.title.split('::')[0]?.trim() ||
-    document.title.split('-')[0]?.trim() ||
-    document.title;
-
-  const metaTitle = document.querySelector('meta[property="og:title"]')?.content;
-
-  // Choose the best available source
-  let rawTitle = appHubName?.textContent || metaTitle || pageTitle || '';
-
-  // Clean the title but preserve meaningful characters
-  // Only remove characters that might interfere with search
-  let cleanTitle = rawTitle
-    .replace(/™|®|©/g, '')                 // Remove trademark/copyright symbols
-    .replace(/\s+/g, ' ')                  // Normalize whitespace
-    .replace(/\s*[-:]\s*(Steam|Valve).*/i, '') // Remove "- Steam" or ": Valve" suffixes
-    .trim();
-
-  console.log(`[Title Extraction] Raw: "${rawTitle}", Cleaned: "${cleanTitle}"`);
-
-  if (!cleanTitle) {
-    throw new Error('Game title could not be determined');
-  }
-
-  return cleanTitle;
-}
-
 async function fetchPricesWithFilters(filters) {
   try {
     const gameTitle = extractGameTitle();
