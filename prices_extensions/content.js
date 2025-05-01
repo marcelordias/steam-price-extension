@@ -96,6 +96,7 @@ function extractGameTitle() {
     .replace(/™|®|©/g, '')                 // Remove trademark/copyright symbols
     .replace(/\s+/g, ' ')                  // Normalize whitespace
     .replace(/\s*[-:]\s*(Steam|Valve).*/i, '') // Remove "- Steam" or ": Valve" suffixes
+    .replace(/[:;]/g, '')             // Replace colons and semicolons with spaces
     .trim();
 
   console.log(`[Title Extraction] Raw: "${rawTitle}", Cleaned: "${cleanTitle}"`);
