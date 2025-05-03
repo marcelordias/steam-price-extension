@@ -4,7 +4,7 @@
             "id": "1",
             "name": "Steam",
             "isPopular": true,
-            "checked": true
+            "checked": false
         },
         {
             "id": "2",

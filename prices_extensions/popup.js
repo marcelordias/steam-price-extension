@@ -80,6 +80,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 ${item.isPopular ? '<span class="filter-tag">Popular</span>' : ''}
             `;
         }
+
+        // Add change event listener to each filter element
+        setTimeout(() => {
+            const input = label.querySelector('input');
+            input.addEventListener('change', debounce(applyFilters, 500));
+        }, 0);
+
         return label;
     }
 
@@ -101,10 +108,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Select/Deselect all functionality
         if (selectAllBtn) {
-            selectAllBtn.addEventListener('click', () => toggleAll(listElement, name, true, countElement));
+            selectAllBtn.addEventListener('click', () => {
+                toggleAll(listElement, name, true, countElement);
+                applyFilters(); // Apply filters after toggle
+            });
         }
         if (deselectAllBtn) {
-            deselectAllBtn.addEventListener('click', () => toggleAll(listElement, name, false, countElement));
+            deselectAllBtn.addEventListener('click', () => {
+                toggleAll(listElement, name, false, countElement);
+                applyFilters(); // Apply filters after toggle
+            });
         }
         // Update count on change
         listElement.addEventListener('change', () => updateCount(listElement, name, countElement));
@@ -124,14 +137,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Update the count of selected items
-    // In updateCount function
     function updateCount(listElement, name, countElement) {
         const total = listElement.querySelectorAll(`input[name="${name}"]`).length;
         const checked = listElement.querySelectorAll(`input[name="${name}"]:checked`).length;
         countElement.textContent = `${checked} of ${total} selected`;
     }
 
-    // Update price range display
+    // Helper function to debounce function calls
     function debounce(func, wait) {
         let timeout;
         return function (...args) {
@@ -140,7 +152,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
     }
 
-    const debouncedUpdatePriceDisplay = debounce(function () {
+    // Update price range display
+    const updatePriceDisplay = function () {
         const minValue = parseInt(elements.minPriceRange.value);
         const maxValue = parseInt(elements.maxPriceRange.value);
 
@@ -161,7 +174,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         const maxPercent = (elements.maxPriceRange.value / elements.maxPriceRange.max) * 100;
         elements.rangeTrack.style.left = `${minPercent}%`;
         elements.rangeTrack.style.width = `${maxPercent - minPercent}%`;
-    }, 50); // 50ms debounce
+    };
+
+    const debouncedUpdatePriceDisplay = debounce(function () {
+        updatePriceDisplay.call(this);
+        applyFilters(); // Apply filters after price range change
+    }, 500);
 
     // Save filters to local storage
     async function saveFilters(filters) {
@@ -172,70 +190,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         });
     }
-
-    // Handle form submission
-    document.getElementById('filters-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const button = e.target.querySelector('button[type="submit"]');
-        const originalText = button.innerHTML;
-
-        try {
-            const filters = {
-                priceRange: getSelectedFilters('priceRange'),
-                stores: getSelectedFilters('store'),
-                regions: getSelectedFilters('region'),
-                editions: getSelectedFilters('edition'),
-                currency: getSelectedFilters('currency'),
-                platform: getSelectedFilters('platform')
-            };
-
-            await saveFilters(filters);
-
-            const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-            const currentTab = tabs[0];
-            if (currentTab.url?.includes('store.steampowered.com/app/')) {
-                button.innerHTML = '<span>Fetching prices...</span>';
-
-                try {
-                    const response = await new Promise((resolve, reject) => {
-                        chrome.tabs.sendMessage(
-                            currentTab.id,
-                            { action: 'applyFilters', filters },
-                            (response) => {
-                                if (chrome.runtime.lastError) {
-                                    reject(chrome.runtime.lastError);
-                                } else {
-                                    resolve(response);
-                                }
-                            }
-                        );
-
-                        setTimeout(() => reject(new Error('Request timed out')), 10000);
-                    });
-
-                    if (response?.success) {
-                        button.innerHTML = '<span>Updated Filters!</span>';
-                    } else {
-                        console.error('Error fetching prices:', response?.error);
-                        button.innerHTML = '<span>Error fetching prices</span>';
-                    }
-                } catch (error) {
-                    console.error('Message error:', error);
-                    button.innerHTML = '<span>Communication error</span>';
-                }
-            } else {
-                button.innerHTML = '<span>Saved!</span>';
-            }
-        } catch (error) {
-            console.error('Error saving filters:', error);
-            button.innerHTML = '<span>Error saving filters</span>';
-        } finally {
-            setTimeout(() => {
-                button.innerHTML = originalText;
-                window.close();
-            }, 1000);
-        }
-    });
 
     // Get selected filters for a specific name
     function getSelectedFilters(name) {
@@ -256,14 +210,93 @@ document.addEventListener('DOMContentLoaded', async () => {
             .map(checkbox => checkbox.value);
     }
 
+    // This function replaces the form submit handler
+    async function applyFilters() {
+        const filterStatusElement = document.createElement('div');
+        filterStatusElement.className = 'filter-status';
+        filterStatusElement.textContent = 'Applying filters...';
+        filterStatusElement.style.cssText = `
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary-color);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 1000;
+            opacity: 0.9;
+        `;
+        document.body.appendChild(filterStatusElement);
+
+        try {
+            const filters = {
+                priceRange: getSelectedFilters('priceRange'),
+                stores: getSelectedFilters('store'),
+                regions: getSelectedFilters('region'),
+                editions: getSelectedFilters('edition'),
+                currency: getSelectedFilters('currency'),
+                platform: getSelectedFilters('platform')
+            };
+
+            await saveFilters(filters);
+
+            const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+            const currentTab = tabs[0];
+            if (currentTab.url?.includes('store.steampowered.com/app/')) {
+                filterStatusElement.textContent = 'Fetching prices...';
+
+                try {
+                    const response = await new Promise((resolve, reject) => {
+                        chrome.tabs.sendMessage(
+                            currentTab.id,
+                            { action: 'applyFilters', filters },
+                            (response) => {
+                                if (chrome.runtime.lastError) {
+                                    reject(chrome.runtime.lastError);
+                                } else {
+                                    resolve(response);
+                                }
+                            }
+                        );
+
+                        setTimeout(() => reject(new Error('Request timed out')), 10000);
+                    });
+
+                    if (response?.success) {
+                        filterStatusElement.textContent = 'Filters applied!';
+                    } else {
+                        console.error('Error fetching prices:', response?.error);
+                        filterStatusElement.textContent = 'Error fetching prices';
+                    }
+                } catch (error) {
+                    console.error('Message error:', error);
+                    filterStatusElement.textContent = 'Communication error';
+                }
+            } else {
+                filterStatusElement.textContent = 'Filters saved!';
+            }
+        } catch (error) {
+            console.error('Error saving filters:', error);
+            filterStatusElement.textContent = 'Error saving filters';
+        } finally {
+            // Remove the status element after a delay
+            setTimeout(() => {
+                filterStatusElement.remove();
+            }, 1500);
+        }
+    }
+
     // Load saved preferences
     chrome.storage.local.get(['priceRange'], (result) => {
         const range = result.priceRange || DEFAULT_PRICE_RANGE;
         elements.minPriceRange.value = range.min;
         elements.maxPriceRange.value = range.max;
-        debouncedUpdatePriceDisplay();
+        updatePriceDisplay();
     });
 
+    // Add event listeners for price range sliders
     elements.minPriceRange.addEventListener('input', debouncedUpdatePriceDisplay);
     elements.maxPriceRange.addEventListener('input', debouncedUpdatePriceDisplay);
 
@@ -314,6 +347,5 @@ document.addEventListener('DOMContentLoaded', async () => {
             dataLoader: () => loadData('platforms.json', 'platforms'),
             name: 'platform'
         })
-
     ]);
 });
