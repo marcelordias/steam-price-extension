@@ -28,8 +28,7 @@
         "regions.json",
         "editions.json",
         "currencies.json",
-        "platforms.json",
-        "assets/white.svg"
+        "platforms.json"
       ],
       "matches": [
         "<all_urls>"
