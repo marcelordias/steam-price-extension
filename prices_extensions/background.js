@@ -1,31 +1,20 @@
-// Common options and headers reused across requests
-const STEAMDB_HEADERS = {
-  Accept: 'application/json',
-  'X-Requested-With': 'SteamDB',
-};
-
 // Cache configuration
 const CACHE_CONFIG = {
   prices: {
     maxAge: 3600000, // 1 hour in milliseconds
     name: 'prices-cache'
-  },
-  steamdb: {
-    maxAge: 86400000, // 24 hours in milliseconds
-    name: 'steamdb-cache'
   }
 };
 
 // Initialize caches when service worker starts
 let caches = {
-  prices: new Map(),
-  steamdb: new Map()
+  prices: new Map()
 };
 
 // Load cached data from storage
 async function initializeCaches() {
   try {
-    const result = await chrome.storage.local.get(['pricesCache', 'steamdbCache']);
+    const result = await chrome.storage.local.get(['pricesCache']);
 
     if (result.pricesCache) {
       caches.prices = new Map(JSON.parse(result.pricesCache));
@@ -33,14 +22,7 @@ async function initializeCaches() {
       cleanCache('prices');
     }
 
-    if (result.steamdbCache) {
-      caches.steamdb = new Map(JSON.parse(result.steamdbCache));
-      // Clean expired entries
-      cleanCache('steamdb');
-    }
-
-    console.log('[Cache] Initialized with', caches.prices.size, 'price entries and',
-      caches.steamdb.size, 'SteamDB entries');
+    console.log('[Cache] Initialized with', caches.prices.size, 'price entries');
   } catch (error) {
     console.error('[Cache] Initialization error:', error);
   }
@@ -119,33 +101,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
     return true; // Indicate asynchronous response
   }
-
-  if (message.action === "GetAppPrice") {
-    // Try to get from cache first
-    const cacheKey = JSON.stringify(message.data);
-    const cachedResponse = getCachedResponse('steamdb', cacheKey);
-
-    if (cachedResponse) {
-      console.log(`[${requestId}] Cache hit for GetAppPrice`);
-      logPerformance("GetAppPrice (cached)", startTime, requestId);
-      sendResponse({ success: true, data: cachedResponse, fromCache: true });
-      return true;
-    }
-
-    GetAppPrice(message.data, requestId)
-      .then(data => {
-        // Cache the successful response
-        cacheResponse('steamdb', cacheKey, data);
-
-        logPerformance("GetAppPrice", startTime, requestId);
-        sendResponse({ success: true, data });
-      })
-      .catch(error => {
-        logPerformance("GetAppPrice (error)", startTime, requestId);
-        sendResponse({ success: false, error: error.message });
-      });
-    return true; // Indicate asynchronous response
-  }
 });
 
 // Get response from cache if valid
@@ -197,56 +152,6 @@ async function fetchPrices(data, requestId) {
   return handleResponse(response, requestId);
 }
 
-// Fetch app price from SteamDB
-async function GetAppPrice({ appid, currency }, requestId) {
-  const params = new URLSearchParams({
-    appid: Number.parseInt(appid, 10),
-    currency,
-  });
-
-  console.log(`[${requestId}] Fetching SteamDB price for app: ${appid}, currency: ${currency}`);
-
-  try {
-    // Add retry logic with exponential backoff
-    for (let attempt = 0; attempt < 3; attempt++) {
-      try {
-        const response = await fetch(`https://steamdb.info/api/ExtensionAppPrice/?${params.toString()}`, {
-          headers: {
-            ...STEAMDB_HEADERS,
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
-          },
-        });
-
-        // Check for rate limiting
-        if (response.status === 429) {
-          // Increase the retry delay more significantly
-          const retryAfter = parseRetryAfter(response.headers.get('Retry-After')) || Math.max(5000, (2 ** attempt) * 2000);
-          console.log(`[${requestId}] Rate limited, retrying after ${retryAfter}ms (attempt ${attempt + 1})`);
-          await new Promise(resolve => setTimeout(resolve, retryAfter));
-          continue;
-        }
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        return data;
-      } catch (error) {
-        if (attempt === 2) throw error;
-        // Increase backoff time
-        await new Promise(resolve => setTimeout(resolve, Math.max(3000, (2 ** attempt) * 2000)));
-      }
-    }
-    throw new Error('Failed after 3 retry attempts');
-  } catch (error) {
-    console.error(`[${requestId}] Error fetching price history:`, error);
-    // Return a formatted error that the UI can handle
-    return { success: false, error: error.message };
-  }
-}
-
 // Handle response with status checks
 async function handleResponse(response, requestId) {
   if (!response.ok) {
@@ -273,5 +178,4 @@ function logPerformance(action, startTime, requestId) {
 
 setInterval(() => {
   cleanCache('prices');
-  cleanCache('steamdb');
 }, 3600000);
