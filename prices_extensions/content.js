@@ -1,51 +1,5 @@
-/** @type {browser} ExtensionApi */
-var ExtensionApi = (() => {
-  if (typeof browser !== 'undefined' && browser.storage) {
-    return browser;
-  }
-  if (typeof chrome !== 'undefined' && chrome.storage) {
-    return chrome;
-  }
-  throw new Error('No appropriate web extensions API found');
-})();
-
-// Constants
-const language = ExtensionApi.i18n.getUILanguage();
-const numberFormatter = new Intl.NumberFormat(language);
-let CurrentAppID = null;
-
 // Cache for previous requests
 const priceCache = new Map();
-
-// Utilities
-function GetLanguage() {
-  return language;
-}
-
-function GetAppIDFromUrl(url) {
-  const match = url.match(/\/(?:app|sub|bundle|friendsthatplay|gamecards|recommended|widget)\/(?<id>[0-9]+)/);
-  return match ? Number.parseInt(match.groups.id, 10) : -1;
-}
-
-function GetCurrentAppID() {
-  if (!CurrentAppID) {
-    CurrentAppID = GetAppIDFromUrl(location.pathname);
-  }
-  console.log(`[AppID] Current AppID: ${CurrentAppID}`); // Debugging line
-  return CurrentAppID;
-}
-
-function _t(message, substitutions = []) {
-  return ExtensionApi.i18n.getMessage(message, substitutions);
-}
-
-function GetLocalResource(res) {
-  return ExtensionApi.runtime.getURL(res);
-}
-
-function GetHomepage() {
-  return 'https://steamdb.info/';
-}
 
 // Storage and Filters
 chrome.storage.local.get(
@@ -62,8 +16,6 @@ chrome.storage.local.get(
       });
     } catch (error) {
       console.error('Error fetching prices:', error);
-    } finally {
-      DrawLowestPrice();
     }
   }
 );
@@ -93,10 +45,10 @@ function extractGameTitle() {
   // Clean the title but preserve meaningful characters
   // Only remove characters that might interfere with search
   let cleanTitle = rawTitle
-    .replace(/™|®|©/g, '')                 // Remove trademark/copyright symbols
-    .replace(/\s+/g, ' ')                  // Normalize whitespace
+    .replace(/[™®©]/g, '')                      // Remove trademark/copyright symbols
+    .replace(/\s+/g, ' ')                       // Normalize whitespace
     .replace(/\s*[-:]\s*(Steam|Valve).*/i, '') // Remove "- Steam" or ": Valve" suffixes
-    .replace(/[:;]/g, '')             // Replace colons and semicolons with spaces
+    .replace(/[:;]/g, '')                      // Replace colons and semicolons with spaces
     .trim();
 
   console.log(`[Title Extraction] Raw: "${rawTitle}", Cleaned: "${cleanTitle}"`);
@@ -210,10 +162,26 @@ function injectPrices(data) {
   mainContainer.querySelectorAll('.dynamic').forEach((el) => el.remove());
 
   if (Array.isArray(data)) {
-    data.forEach((offer) => {
-      const newWrapper = createPriceWrapper(offer);
-      existingWrapper.insertAdjacentElement('afterend', newWrapper);
-    });
+    if (data.length === 0) {
+      // No alternative prices found, show message
+      const noResultsWrapper = document.createElement('div');
+      noResultsWrapper.classList.add('game_area_purchase_game_wrapper', 'dynamic');
+
+      noResultsWrapper.innerHTML = `
+        <div class="game_area_purchase_game notice_box_content">
+          <h1>No Alternative Prices Found</h1>
+          <div>No alternative pricing options were found for this game with your current filter settings.</div>
+        </div>
+      `;
+
+      existingWrapper.insertAdjacentElement('afterend', noResultsWrapper);
+    } else {
+      // Found prices, display them
+      data.forEach((offer) => {
+        const newWrapper = createPriceWrapper(offer);
+        existingWrapper.insertAdjacentElement('afterend', newWrapper);
+      });
+    }
   } else {
     console.warn('Data is not an array:', data);
   }
@@ -250,131 +218,4 @@ function createPriceWrapper(offer) {
 
   wrapper.appendChild(priceSection);
   return wrapper;
-}
-
-function FormatRelativeDate(date) {
-  const relativeFormatter = new Intl.RelativeTimeFormat(language, { numeric: 'auto' });
-  const dayInSeconds = 86400; // 24 * 60 * 60
-  const daysSince = Math.floor((Date.now() / 1000 - date) / dayInSeconds);
-
-  if (daysSince > 30) {
-    return [daysSince, relativeFormatter.format(-Math.round(daysSince / 30), 'month')];
-  }
-
-  return [daysSince, relativeFormatter.format(-daysSince, 'day')];
-}
-
-async function DrawLowestPrice() {
-  const priceMeta = document.querySelector('meta[itemprop="price"]');
-  const price = priceMeta ? parseFloat(priceMeta.content.replace(',', '.')) : 0;
-
-  if (!price || price < 0.01) return;
-
-  let currency = document.querySelector('meta[itemprop="priceCurrency"]')?.content || 'USD';
-
-  // Adjust currency for USD regional mappings
-  if (currency === 'USD') {
-    currency = adjustCurrencyForRegion() || 'USD';
-  }
-
-  const container = document.getElementById('game_area_purchase');
-  if (!container) return;
-
-  const element = createLowestPriceElement();
-  const loadingIndicator = document.createElement('div');
-  loadingIndicator.className = 'steamdb_prices_loading';
-  loadingIndicator.textContent = 'Loading price history...';
-  element.querySelector('div').appendChild(loadingIndicator);
-
-  container.insertAdjacentElement('afterbegin', element);
-
-  try {
-    console.log(`[Request] Fetching price history for ${GetCurrentAppID()} (${currency})`);
-    const response = await chrome.runtime.sendMessage({
-      action: 'GetAppPrice',
-      data: { appid: GetCurrentAppID(), currency },
-    });
-
-    if (!response?.success) {
-      // Show a meaningful error instead of removing the element
-      element.querySelector('.steamdb_prices_top').textContent = 'Price history unavailable';
-      element.querySelector('.steamdb_prices_bottom').textContent =
-        response?.error ? `Error: ${response.error}` : 'Could not load price data';
-      loadingIndicator.remove();
-      return;
-    }
-
-    loadingIndicator.remove();
-    updateLowestPriceElement(response.data, element);
-  } catch (error) {
-    console.error('Error loading price history:', error);
-    element.querySelector('.steamdb_prices_top').textContent = 'Price history unavailable';
-    element.querySelector('.steamdb_prices_bottom').textContent = `Error: ${error.message}`;
-    loadingIndicator?.remove();
-  }
-}
-
-function adjustCurrencyForRegion() {
-  const countryMap = {
-    AZ: 'USD-CIS', AM: 'USD-CIS', BY: 'USD-CIS', GE: 'USD-CIS', KG: 'USD-CIS',
-    BD: 'USD-SASIA', NP: 'USD-SASIA', PK: 'USD-SASIA',
-    AR: 'USD-LATAM', VE: 'USD-LATAM',
-    DZ: 'USD-MENA', TR: 'USD-MENA',
-  };
-
-  const script = document.evaluate('//script[contains(text(), "EnableSearchSuggestions")]', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-  const country = script?.textContent.match(/EnableSearchSuggestions\(.+?'(?<cc>[A-Z]{2})',/)?.groups?.cc;
-  return countryMap[country] || null;
-}
-
-function createLowestPriceElement() {
-  const element = document.createElement('a');
-  element.className = 'steamdb_prices';
-  element.href = `${GetHomepage()}app/${GetCurrentAppID()}/`;
-  element.target = '_blank';
-  element.dir = _t('@@bidi_dir');
-
-  const image = document.createElement('img');
-  image.src = GetLocalResource('assets/white.svg');
-  element.appendChild(image);
-
-  const textContainer = document.createElement('div');
-  textContainer.innerHTML = '<div class="steamdb_prices_top">…</div><div class="steamdb_prices_bottom">…</div>';
-  element.appendChild(textContainer);
-
-  return element;
-}
-
-function updateLowestPriceElement(data, element) {
-  const top = element.querySelector('.steamdb_prices_top');
-  const bottom = element.querySelector('.steamdb_prices_bottom');
-
-  if (!data.data || !data.data.p) {
-    top.innerHTML = _t('app_price_unavailable') || 'Price data unavailable';
-    bottom.textContent = data.error ? `Error: ${data.error}` : 'Could not load price data';
-    return;
-  }
-
-  const safePrice = escapeHtml(data.data.p);
-
-  if (data.data.l) {
-    top.innerHTML = _t('app_lowest_price_limited', [safePrice, escapeHtml(data.data.l)]);
-  } else if (data.data.d > 0) {
-    top.innerHTML = _t('app_lowest_price_discount', [safePrice, data.data.d.toString()]);
-  } else {
-    top.innerHTML = _t('app_lowest_price', [safePrice]);
-  }
-
-  const lastUpdated = new Intl.DateTimeFormat(language, { dateStyle: 'medium' }).format(data.data.t * 1000);
-  const [, relativeText] = FormatRelativeDate(data.data.t);
-
-  if (data.data.c > 1) {
-    bottom.textContent = _t('app_lowest_date_multiple', [lastUpdated, relativeText, data.data.c.toString()]);
-  } else {
-    bottom.textContent = _t('app_lowest_date', [lastUpdated, relativeText]);
-  }
-}
-
-function escapeHtml(str) {
-  return str.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;');
 }
