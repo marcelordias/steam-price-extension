@@ -11,6 +11,17 @@ let caches = {
   prices: new Map()
 };
 
+// Load configuration files
+async function loadJsonFile(filename) {
+  try {
+    const response = await fetch(chrome.runtime.getURL(filename));
+    return await response.json();
+  } catch (error) {
+    console.error(`[Config] Error loading ${filename}:`, error);
+    return null;
+  }
+}
+
 // Load cached data from storage
 async function initializeCaches() {
   try {
@@ -100,6 +111,39 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ success: false, error: error.message });
       });
     return true; // Indicate asynchronous response
+  }
+});
+// Handle other actions if needed
+chrome.runtime.onInstalled.addListener(async ({ reason }) => {
+  if (reason === 'install') {
+    console.log('[Init] Extension installed, setting up default configurations');
+
+    try {
+      // Load JSON configuration files
+      const stores = await loadJsonFile('stores.json');
+      const regions = await loadJsonFile('regions.json');
+      const editions = await loadJsonFile('editions.json');
+      const currencies = await loadJsonFile('currencies.json');
+      const platforms = await loadJsonFile('platforms.json');
+
+      // Extract checked values from each configuration
+      const defaultConfig = {
+        priceRange: { min: 0, max: 999 },
+        stores: stores ? stores.stores.filter(item => item.checked).map(item => item.name) : ['Steam'],
+        regions: regions ? regions.regions.filter(item => item.checked).map(item => item.name) : ['GLOBAL'],
+        editions: editions ? editions.editions.filter(item => item.checked).map(item => item.name) : ['Standard'],
+        currency: (currencies && currencies.currencies.find(c => c.checked)) ?
+          currencies.currencies.find(c => c.checked).name : 'eur',
+        platform: (platforms && platforms.platforms.find(p => p.checked)) ?
+          platforms.platforms.find(p => p.checked).name : 'PC'
+      };
+
+      // Save to storage
+      await chrome.storage.local.set(defaultConfig);
+      console.log('[Init] Default configuration saved:', defaultConfig);
+    } catch (error) {
+      console.error('[Init] Error setting up default configuration:', error);
+    }
   }
 });
 
