@@ -5,13 +5,10 @@
   "description": "Get the best prices for games on Steam",
   "permissions": [
     "activeTab",
-    "storage",
-    "webRequest",
-    "alarms"
+    "storage"
   ],
   "host_permissions": [
     "https://*.steampowered.com/*",
-    "https://steamcommunity.com/*",
     "https://steam-price-extension.onrender.com/*"
   ],
   "action": {
