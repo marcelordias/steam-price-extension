@@ -13,14 +13,12 @@ export const isValidOffer = ({
   price,
   edition,
   region,
-
   filterOptions,
 }: {
   store: string;
   price: number;
   edition: string;
   region: string;
-
   filterOptions?: {
     stores?: string[];
     priceRange?: { min: number; max: number };
