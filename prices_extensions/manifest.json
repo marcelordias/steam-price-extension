@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Steam Price Extension",
-  "version": "1.1",
+  "version": "1.2",
   "description": "Get the best prices for games on Steam",
   "permissions": [
     "activeTab",
