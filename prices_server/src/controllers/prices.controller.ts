@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { AllkeyshopService } from "allkeyshop-api";
 import { isValidOffer } from "../utils/validate.util";
 import { formatPrice } from "../utils/format.util";
+import { getPriceAsNumber } from "../utils/price.util";
 
 export const getPrices = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -58,11 +59,13 @@ export const getPrices = async (req: Request, res: Response): Promise<void> => {
       filteredOffers.reduce((acc: any, offer: any) => {
         const { merchantName } = offer;
 
-        if (
-          !acc[merchantName] ||
-          acc[merchantName].cheapestOffer.price.priceWithoutCoupon >
-            offer.price.priceWithoutCoupon
-        ) {
+        const isCheapestOffer =
+          !acc[merchantName]?.cheapestOffer?.price?.priceWithoutCoupon ||
+          getPriceAsNumber(
+            acc[merchantName]?.cheapestOffer?.price?.priceWithoutCoupon
+          ) > getPriceAsNumber(offer.price.priceWithoutCoupon);
+
+        if (!acc[merchantName] || isCheapestOffer) {
           acc[merchantName] = {
             merchantName,
             cheapestOffer: {
@@ -73,6 +76,9 @@ export const getPrices = async (req: Request, res: Response): Promise<void> => {
                 pricePaypal: formatPrice(offer.price.pricePaypal),
                 price: formatPrice(offer.price.price),
                 priceWithoutCoupon: formatPrice(offer.price.priceWithoutCoupon),
+                priceWithoutCouponNumeric: parseFloat(
+                  offer.price.priceWithoutCoupon
+                ),
               },
               edition: offer.edition,
               region: offer.region,
@@ -86,8 +92,8 @@ export const getPrices = async (req: Request, res: Response): Promise<void> => {
       }, {} as Record<string, any>)
     ).sort(
       (a: any, b: any) =>
-        b.cheapestOffer.price.priceWithoutCoupon -
-        a.cheapestOffer.price.priceWithoutCoupon
+        b.cheapestOffer.price.priceWithoutCouponNumeric -
+        a.cheapestOffer.price.priceWithoutCouponNumeric
     );
 
     res.json(groupedOffers);

@@ -4,6 +4,16 @@
       "id": "1",
       "name": "Standard",
       "checked": true
+    },
+    {
+      "id": "34",
+      "name": "Premium",
+      "checked": true
+    },
+    {
+      "id": "531",
+      "name": "Premium Edition + DLC",
+      "checked": true
     }
   ]
 }

@@ -3,7 +3,8 @@ export const isValidOffer = (offer: any, filterOptions: any): boolean => {
 
   if (
     filterOptions?.priceRange &&
-    (price < filterOptions.priceRange.min || price > filterOptions.priceRange.max)
+    (price < filterOptions.priceRange.min ||
+      price > filterOptions.priceRange.max)
   ) {
     return false;
   }
@@ -37,3 +38,11 @@ export const formatPrice = (price: number): string =>
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+
+export const getPriceAsNumber = (price: string | number): number => {
+  if (typeof price === "number") return price;
+  if (typeof price === "string") {
+    return parseFloat(price.replace(",", "."));
+  }
+  return Number.MAX_SAFE_INTEGER;
+};
