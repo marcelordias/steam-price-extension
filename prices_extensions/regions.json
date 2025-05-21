@@ -16,61 +16,67 @@
         "id": "25",
         "name": "GIFT",
         "filterName": "STEAM GIFT GLOBAL",
-        "checked": false
+        "checked": true
       },
       {
         "id": "80",
         "name": "GLOBAL",
         "filterName": "EPIC GLOBAL",
-        "checked": false
+        "checked": true
       },
       {
         "id": "259",
         "name": "GIFT EU",
         "filterName": "STEAM GIFT EU",
-        "checked": false
+        "checked": true
       },
       {
         "id": "260",
         "name": "GIFT IN ENGLISH",
         "filterName": "STEAM GIFT EN LANG.",
-        "checked": false
+        "checked": true
       },
       {
         "id": "261",
         "name": "IN ENGLISH ONLY",
         "filterName": "STEAM ENG ONLY",
-        "checked": false
+        "checked": true
       },
       {
         "id": "262",
         "name": "GIANTS GLOBAL",
         "filterName": "GIANTS GLOBAL",
-        "checked": false
+        "checked": true
       },
       {
         "id": "268",
         "name": "GIANTS EU",
         "filterName": "GIANTS EU",
-        "checked": false
+        "checked": true
       },
       {
         "id": "427",
         "name": "EU ENGLISH ONLY",
         "filterName": "STEAM EU EN ONLY",
-        "checked": false
+        "checked": true
       },
       {
         "id": "471",
         "name": "XBOX/PC EU ENG",
         "filterName": "XBOX/PC EU ENGLISH ONLY",
-        "checked": false
+        "checked": true
+      },
+      {
+        "id": "306",
+        "name": "XBOX/PC",
+        "filterName": "XBOX/PC",
+        "checked": true
       },
       {
         "id": "steamrow",
         "name": "ROW",
         "filterName": "STEAM ROW",
-        "checked": false
+        "checked": true
       }
     ]
   }
